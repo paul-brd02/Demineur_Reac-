@@ -1,16 +1,14 @@
-.topBar {
-    background-color: black;
-    max-width: 100%;
-    height: 50px;
+div.topBar {
+    background-color: gray;
     display: flex;
-    color: white;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
 }
 
-.infos {
-    width: 50px;
-    display: flex;
-    justify-content: space-between;
+.newGame {
+    margin: 20px;
+}
+
+.timer {
+    color: white;
 }
