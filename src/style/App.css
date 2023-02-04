@@ -5,11 +5,13 @@
 .colonne {
   display: flex;
   height: 100vh;
-  width: 100vh;
+  width: 100%;
 }
 
 .grid {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .App-logo {
