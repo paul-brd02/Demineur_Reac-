@@ -1,71 +1,191 @@
-import { Difficulty } from '../types/enum.ts'
+import React, { useState, useEffect } from 'react';
 
-import "../style/grid.css"
+import Case from "./Case.jsx"
 
-export default function Grid({ mode, restart }) {
-    let gridSize, bombs;
+export default function Grid({ size, bombs }) {
 
-    switch (mode) {
-        case Difficulty.DEBUTANT:
-            gridSize = 9
-            bombs = 10;
-            break;
-        case Difficulty.INTERMEDIARE:
-            gridSize = 16
-            bombs = 40;
-            break;
-        case Difficulty.EXPERT:
-            gridSize = 22
-            bombs = 100;
-            break;
-        case Difficulty.MAITRE:
-            gridSize = 30
-            bombs = 250;
-            break;
-        default:
-            gridSize = 0
-            break;
+  const initializeGrid = () => {  
+    // Initialiser la grille de jeu 1- mettre les bombes et après ajouter les chiffres
+    const grid = [];
+    for (let row = 0; row < size; row++) {
+      const currentRow = [];
+      for (let col = 0; col < size; col++) {
+        currentRow.push({
+          x: row,
+          y: col,
+          value: '',
+          isRevealed: false,
+          hasMine: false,
+          hasFlag: false,
+        });
+      }
+      grid.push(currentRow);
     }
 
-    let bombsPosition = [];
-
-    while (bombsPosition.length < bombs) {
-        let row = Math.floor(Math.random() * gridSize);
-        let col = Math.floor(Math.random() * gridSize);
-        let bombCoords = [row, col];
-        if (!bombsPosition.some(coord => coord[0] === row && coord[1] === col)) {
-            bombsPosition.push(bombCoords);
-        }
+    // Placer les mines aléatoirement
+    let placedMines = 0;
+    while (placedMines < bombs) {
+      const randomRow = Math.floor(Math.random() * size);
+      const randomCol = Math.floor(Math.random() * size);
+      if (!grid[randomRow][randomCol].hasMine) {
+        grid[randomRow][randomCol].hasMine = true;
+        placedMines++;
+      }
     }
 
-    const countAdjacentBombs = (gridSize, bombsPosition, row, col) => {
-        let bombCount = 0;
-        for (let rowDelta = -1; rowDelta <= 1; rowDelta++) {
-            for (let colDelta = -1; colDelta <= 1; colDelta++) {
-                if (bombsPosition.some(([r, c]) => r === (row + rowDelta) && c === (col + colDelta))) {
-                    bombCount++;
-                }
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        let minesAround = 0;
+        // Vérifier les 8 cases autour de la case actuelle
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            if (
+              row + i >= 0 &&
+              row + i < size &&
+              col + j >= 0 &&
+              col + j < size &&
+              grid[row + i][col + j].hasMine
+            ) {
+              minesAround++;
             }
+          }
         }
-        return bombCount;
-    };
-    
-    const buttons = [];
-    for (let i = 0; i < gridSize; i++) {
-        const row = [];
-        for (let j = 0; j < gridSize; j++) {
-            let bombCount = countAdjacentBombs(gridSize, bombsPosition, i, j);
-            if (bombsPosition.some(([r, c]) => r === i && c === j)) {
-                row.push(<button className='case' key={j}>b</button>)
-            } else if (bombCount > 0) {
-                row.push(<button className='case' key={j}>{bombCount}</button>)
-            } else {
-                row.push(<button className='case' key={j}></button>)
-            }
+        if (!grid[row][col].hasMine) {
+          grid[row][col].value = minesAround.toString();
         }
-        buttons.push(<div key={i}>{row}</div>);
+      }
     }
 
-    return <div>{buttons}</div>;
+    return grid;
+  }
 
+  const [grid, setGrid] = useState(initializeGrid());
+
+  useEffect(() => {
+    setGrid((initializeGrid()));
+  }, [size, bombs]);
+
+  //quand je clique, regarde si y'a une bomb, après si y'a pas de bombs mettre revélé a true et après on fait un update (créer update)
+
+  const handleSquareClick = (x, y) => {
+    if (grid[y][x].hasFlag) {
+      return
+    }
+    const newGrid = [...grid];
+    if (newGrid[y][x].hasMine) {
+      alert("Vous avez perdu!");
+      // Tout révéler
+      revealAllGrid(newGrid)
+      setGrid(newGrid)
+    }
+    else {
+      if (newGrid[y][x].value === '0') {
+        revealEmptySquares(x, y, newGrid);
+      }
+
+      newGrid[y][x].isRevealed = true;
+      setGrid(newGrid)
+
+      if (victoryConditions()) 
+      {
+        alert("Vous avez gagné !")
+      }
+    }
+  }
+
+  const revealAllGrid = (newGrid) => {
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        newGrid[row][col].isRevealed = true;
+      }
+    }
+  }
+
+  const victoryConditions = () => {
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        if (grid[row][col].hasMine === false && grid[row][col].isRevealed === false) {
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  const revealEmptySquares = (x, y, newGrid) => {
+
+    if (coordinateInGrid(x, y) && newGrid[y][x].value === '0' && !newGrid[y][x].isRevealed) {
+
+      newGrid[y][x].isRevealed = true;
+      revealAdjacentSquares(x, y, newGrid);
+
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const row = y + i;
+          const col = x + j;
+          revealEmptySquares(col, row, newGrid);
+        }
+      }
+    }
+  }
+
+  function coordinateInGrid(x, y) {
+    return (x >= 0 && x < size && y >= 0 && y < size)
+  }
+
+  const revealAdjacentSquares = (x, y, newGrid) => {
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const row = y + i;
+        const col = x + j;
+        if (
+          row >= 0 &&
+          row < size &&
+          col >= 0 &&
+          col < size &&
+          !newGrid[row][col].hasMine &&
+          newGrid[row][col].value !== '' &&
+          newGrid[row][col].value !== '0' &&
+          !newGrid[row][col].isRevealed
+        ) {
+          newGrid[row][col].isRevealed = true;
+        }
+      }
+    }
+  }
+
+  const handleRightClick = (event, x, y) => {
+    event.preventDefault();
+    // implémentation de la logique pour gérer le clic droit
+    putFlag(x, y)
+  };
+
+  function putFlag(x, y) {
+    if (grid[y][x].isRevealed) {
+      return
+    }
+    const newGrid = [...grid];
+    newGrid[y][x].hasFlag = !newGrid[y][x].hasFlag
+    setGrid(newGrid)
+  }
+
+  return (
+    <div>
+      {grid.map((row, rowIndex) => (
+        <div key={rowIndex}>
+          {row.map((caseData, colIndex) => (
+            <Case
+              key={colIndex}
+              value={caseData.value}
+              isRevealed={caseData.isRevealed}
+              hasMine={caseData.hasMine}
+              hasFlag={caseData.hasFlag}
+              onClick={() => handleSquareClick(caseData.y, caseData.x)}
+              rightClick={(event) => handleRightClick(event, caseData.y, caseData.x)}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }

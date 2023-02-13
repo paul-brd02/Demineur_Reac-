@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react'
 
 import "../style/topBar.css"
-import {Difficulty} from '../types/enum.ts'
+import { Difficulty } from '../types/enum.ts'
+import Mode from '../utility/mode.ts'
 
-export default function TopBar({setMode, setRestart}) {
+export default function TopBar({ size, setSize, setBombs }) {
 
     const [minutes, setMinutes] = useState(0);
     const [secondes, setSecondes] = useState(0);
     const [isGameStarted, setGameStarted] = useState(false);
-    const [difficulty, setDifficulty] = useState("debutant")
-
+    const [mode, setMode] = useState(Difficulty.DEBUTANT)
     const [deadline, setDeadline] = useState()
 
     const getTime = () => {
@@ -28,16 +28,22 @@ export default function TopBar({setMode, setRestart}) {
     }, [isGameStarted, deadline]);
 
     const handleClick = () => {
+        let restart = Mode("")
+        setSize(restart.size)
+        setBombs(restart.bombs)
+
+
         setDeadline(Date.now());
         setGameStarted(true);
-        setMode(difficulty)
-        setRestart(true)
+        let gameMode = Mode(mode)
+        setSize(gameMode.size)
+        setBombs(gameMode.bombs)
     }
 
     return (
         <div className="topBar">
             <div>
-                <select name="difficulty" id="difficulty" onChange={(e) => setDifficulty(() => e.target.value)} style={{borderRadius: '5px'}}>
+                <select name="difficulty" id="difficulty" onChange={(e) => setMode(() => e.target.value)} style={{ borderRadius: '5px' }}>
                     <option value={Difficulty.DEBUTANT}>9x9 cases, 10 bombes</option>
                     <option value={Difficulty.INTERMEDIARE}>16x16 cases, 40 bombes</option>
                     <option value={Difficulty.EXPERT}>22x22 cases, 100 bombes</option>
@@ -45,7 +51,7 @@ export default function TopBar({setMode, setRestart}) {
                 </select>
             </div>
             <div className='newGame'>
-                <button onClick={handleClick} style={{borderRadius: '5px', border:'none'}}>
+                <button onClick={handleClick} style={{ borderRadius: '5px', border: 'none' }}>
                     Nouvelle partie
                 </button>
             </div>
