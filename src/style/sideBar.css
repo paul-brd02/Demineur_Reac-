@@ -1,4 +1,7 @@
 div.topBar {
+    position: absolute;
+    top: 0;
+    left: 0;
     background-color: gray;
     display: flex;
     flex-direction: column;
@@ -13,4 +16,13 @@ div.topBar {
 .timer {
     color: white;
     font-size: 30px;
+}
+
+.gameInfoFlag {
+    height: 40px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
 }

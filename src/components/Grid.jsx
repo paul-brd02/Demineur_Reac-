@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 
 import Case from "./Case.jsx"
 
-export default function Grid({ size, bombs }) {
+export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlagsUpdate }) {
 
-  const initializeGrid = () => {  
-    // Initialiser la grille de jeu 1- mettre les bombes et après ajouter les chiffres
+  const [gridIsRevealed, setGridIsRevealed] = useState(false)
+
+  const initializeGrid = () => {
     const grid = [];
     for (let row = 0; row < size; row++) {
       const currentRow = [];
@@ -63,32 +64,37 @@ export default function Grid({ size, bombs }) {
 
   useEffect(() => {
     setGrid((initializeGrid()));
-  }, [size, bombs]);
+    setGridIsRevealed(false)
+  }, [size, bombs, triggerGrid]);
 
   //quand je clique, regarde si y'a une bomb, après si y'a pas de bombs mettre revélé a true et après on fait un update (créer update)
 
   const handleSquareClick = (x, y) => {
-    if (grid[y][x].hasFlag) {
-      return
-    }
-    const newGrid = [...grid];
-    if (newGrid[y][x].hasMine) {
-      alert("Vous avez perdu!");
-      // Tout révéler
-      revealAllGrid(newGrid)
-      setGrid(newGrid)
-    }
-    else {
-      if (newGrid[y][x].value === '0') {
-        revealEmptySquares(x, y, newGrid);
+    if (!gridIsRevealed) {
+      setGameStarted(true)
+      if (grid[y][x].hasFlag) {
+        return
       }
+      const newGrid = [...grid];
+      if (newGrid[y][x].hasMine) {
+        alert("Vous avez perdu!");
+        // Tout révéler
+        setGrid(revealAllGrid(newGrid))
+        setGameStarted(false)
+      }
+      else {
+        if (newGrid[y][x].value === '0') {
+          revealEmptySquares(x, y, newGrid);
+        }
 
-      newGrid[y][x].isRevealed = true;
-      setGrid(newGrid)
+        newGrid[y][x].isRevealed = true;
+        setGrid(newGrid)
 
-      if (victoryConditions()) 
-      {
-        alert("Vous avez gagné !")
+        if (victoryConditions()) {
+          setGameStarted(false)
+          alert("Vous avez gagné !")
+          revealAllGrid(newGrid)
+        }
       }
     }
   }
@@ -99,6 +105,8 @@ export default function Grid({ size, bombs }) {
         newGrid[row][col].isRevealed = true;
       }
     }
+    setGridIsRevealed(true)
+    return newGrid
   }
 
   const victoryConditions = () => {
@@ -156,8 +164,9 @@ export default function Grid({ size, bombs }) {
 
   const handleRightClick = (event, x, y) => {
     event.preventDefault();
-    // implémentation de la logique pour gérer le clic droit
+    setGameStarted(true)
     putFlag(x, y)
+
   };
 
   function putFlag(x, y) {
@@ -165,26 +174,32 @@ export default function Grid({ size, bombs }) {
       return
     }
     const newGrid = [...grid];
+    if (newGrid[y][x].hasFlag)
+      onFlagsUpdate(true)
+    else
+      onFlagsUpdate(false)
+
+
     newGrid[y][x].hasFlag = !newGrid[y][x].hasFlag
     setGrid(newGrid)
+
+
   }
 
   return (
-    <div>
+    <div style={{ display: 'inline-grid', gridTemplateColumns: `repeat(${size}, 1fr)`, userSelect: "none" }}>
       {grid.map((row, rowIndex) => (
-        <div key={rowIndex}>
-          {row.map((caseData, colIndex) => (
-            <Case
-              key={colIndex}
-              value={caseData.value}
-              isRevealed={caseData.isRevealed}
-              hasMine={caseData.hasMine}
-              hasFlag={caseData.hasFlag}
-              onClick={() => handleSquareClick(caseData.y, caseData.x)}
-              rightClick={(event) => handleRightClick(event, caseData.y, caseData.x)}
-            />
-          ))}
-        </div>
+        row.map((caseData, colIndex) => (
+          <Case
+            key={colIndex}
+            value={caseData.value}
+            isRevealed={caseData.isRevealed}
+            hasMine={caseData.hasMine}
+            hasFlag={caseData.hasFlag}
+            onClick={() => handleSquareClick(caseData.y, caseData.x)}
+            rightClick={(event) => handleRightClick(event, caseData.y, caseData.x)}
+          />
+        ))
       ))}
     </div>
   );

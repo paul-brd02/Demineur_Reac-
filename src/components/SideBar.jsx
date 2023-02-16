@@ -1,43 +1,44 @@
 import React, { useState, useEffect } from 'react'
 
-import "../style/topBar.css"
+import "../style/sideBar.css"
 import { Difficulty } from '../types/enum.ts'
 import Mode from '../utility/mode.ts'
+import Flag from '../cell/flag.png'
 
-export default function TopBar({ size, setSize, setBombs }) {
+export default function TopBar({ setSize, setBombs, gameStarted, setGameStarted, onTriggerUpdate, flags }) {
 
     const [minutes, setMinutes] = useState(0);
     const [secondes, setSecondes] = useState(0);
-    const [isGameStarted, setGameStarted] = useState(false);
     const [mode, setMode] = useState(Difficulty.DEBUTANT)
-    const [deadline, setDeadline] = useState()
-
-    const getTime = () => {
-        const time = -(deadline - Date.now());
-        setMinutes(Math.floor((time / 1000 / 60) % 60));
-        setSecondes(Math.floor((time / 1000) % 60));
-    };
 
     useEffect(() => {
-        if (isGameStarted) {
-            const interval = setInterval(() => getTime(), 1000);
+        if (gameStarted) {
+            let interval = setInterval(() => {
+                setSecondes(secondes + 1)
+                if (secondes === 60) {
+                    setMinutes(minutes + 1)
+                    setSecondes(0)
+                }
+            }, 1000)
 
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(interval)
+            }
         };
-
-    }, [isGameStarted, deadline]);
+        
+    }, [gameStarted, minutes, secondes]);
 
     const handleClick = () => {
-        let restart = Mode("")
-        setSize(restart.size)
-        setBombs(restart.bombs)
+        setMinutes(0)
+        setSecondes(0)
 
-
-        setDeadline(Date.now());
         setGameStarted(true);
+
         let gameMode = Mode(mode)
         setSize(gameMode.size)
         setBombs(gameMode.bombs)
+
+        onTriggerUpdate()
     }
 
     return (
@@ -56,6 +57,9 @@ export default function TopBar({ size, setSize, setBombs }) {
                 </button>
             </div>
             <div className='timer'>{minutes}:{secondes < 10 ? `0${secondes}` : secondes}</div>
+            <div className='gameInfoFlag'>
+                <img src={Flag} alt="Nombre de drapeau restant par rapport aux nombres de mines" style={{maxHeight:'40px'}} /><span style={{marginLeft:'10px', fontSize:'2em', color:'white'}}>{flags}</span>
+            </div>
         </div>
     );
 }
