@@ -89,9 +89,6 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
         newGrid[y][x].isRevealed = true;
         setGrid(newGrid)
 
-        // retirer
-        addVictrory()
-
         if (victoryConditions()) {
           setGameStarted(false)
           alert("Vous avez gagné !")
