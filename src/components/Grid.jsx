@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useContext } from 'react';
 import Case from "./Case.jsx"
 
-export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlagsUpdate }) {
+export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlagsUpdate, flags, addVictrory }) {
 
   const [gridIsRevealed, setGridIsRevealed] = useState(false)
 
@@ -90,10 +89,15 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
         newGrid[y][x].isRevealed = true;
         setGrid(newGrid)
 
+        // retirer
+        addVictrory()
+
         if (victoryConditions()) {
           setGameStarted(false)
           alert("Vous avez gagné !")
           revealAllGrid(newGrid)
+          // ajouter win ici
+          addVictrory()
         }
       }
     }
@@ -105,6 +109,7 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
         newGrid[row][col].isRevealed = true;
       }
     }
+    onFlagsUpdate(0)
     setGridIsRevealed(true)
     return newGrid
   }
@@ -125,6 +130,7 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
     if (coordinateInGrid(x, y) && newGrid[y][x].value === '0' && !newGrid[y][x].isRevealed) {
 
       newGrid[y][x].isRevealed = true;
+      newGrid[y][x].hasFlag = false;
       revealAdjacentSquares(x, y, newGrid);
 
       for (let i = -1; i <= 1; i++) {
@@ -134,7 +140,23 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
           revealEmptySquares(col, row, newGrid);
         }
       }
+      countFlags();
     }
+  }
+
+  const countFlags = () => {
+
+    let total = 0;
+
+    for(let row of grid) {
+      for(let cell of row) {
+        if(cell.hasFlag == true) {
+          total++;
+        }
+      }
+    }
+
+    onFlagsUpdate(bombs - total);
   }
 
   function coordinateInGrid(x, y) {
@@ -157,6 +179,7 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
           !newGrid[row][col].isRevealed
         ) {
           newGrid[row][col].isRevealed = true;
+          newGrid[row][col].hasFlag = false;
         }
       }
     }
@@ -166,24 +189,23 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
     event.preventDefault();
     setGameStarted(true)
     putFlag(x, y)
-
   };
 
   function putFlag(x, y) {
     if (grid[y][x].isRevealed) {
       return
     }
-    const newGrid = [...grid];
-    if (newGrid[y][x].hasFlag)
-      onFlagsUpdate(true)
-    else
-      onFlagsUpdate(false)
+    const newGrid = JSON.parse(JSON.stringify(grid));
 
+    if (newGrid[y][x].hasFlag == true) {
 
+      onFlagsUpdate(flags + 1)
+    }
+    else {
+      onFlagsUpdate(flags - 1)
+    }
     newGrid[y][x].hasFlag = !newGrid[y][x].hasFlag
     setGrid(newGrid)
-
-
   }
 
   return (
@@ -198,6 +220,7 @@ export default function Grid({ size, bombs, setGameStarted, triggerGrid, onFlags
             hasFlag={caseData.hasFlag}
             onClick={() => handleSquareClick(caseData.y, caseData.x)}
             rightClick={(event) => handleRightClick(event, caseData.y, caseData.x)}
+            size={size}
           />
         ))
       ))}

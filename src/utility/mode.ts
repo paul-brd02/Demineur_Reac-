@@ -12,6 +12,6 @@ export default function Mode(mode) {
         case Difficulty.MAITRE:
             return { size: 30, bombs: 250}
         default:
-            return { size: 0, bombs: 0}
+            throw new Error("No mode detected.");
     }
 }

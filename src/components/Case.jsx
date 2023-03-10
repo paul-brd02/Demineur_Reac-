@@ -13,8 +13,12 @@ import Empty from '../cell/empty.png'
 import Bomb from '../cell/redBomb.jpg'
 import Flag from '../cell/flag.png'
 
-export default function Case({ keyCase, value, isRevealed, hasMine, hasFlag, onClick, rightClick }) {
+export default function Case({ keyCase, value, isRevealed, hasMine, hasFlag, onClick, rightClick, size }) {
+
   let img = Unopened
+
+  let maxSize = 800;
+
   if (value !== '' && isRevealed && !hasMine) {
     switch (value) {
       case '1':
@@ -56,7 +60,14 @@ export default function Case({ keyCase, value, isRevealed, hasMine, hasFlag, onC
   
 
     return (
-      <img className="case" src={img} alt="Case du jeu" onClick={onClick} onContextMenu={rightClick}/>
+      <img 
+      className="case" 
+      src={img} 
+      alt="Case du jeu" 
+      onClick={onClick} 
+      onContextMenu={rightClick}
+      style={{height: `${maxSize/size}px`, width: `${maxSize/size}px`}}
+      />
     );
 
 }
